@@ -107,7 +107,7 @@ func (r *rbfCloseActor) registerActor() {
 	actorID := fmt.Sprintf(
 		"PeerWrapper(RbfChanCloser(%s))", r.chanPoint,
 	)
-	_ = actorKey.Spawn(r.actors, actorID, r)
+	_, _ = actorKey.Spawn(r.actors, actorID, r)
 }
 
 // Receive implements the actor.ActorBehavior interface for the rbf closer

@@ -444,6 +444,9 @@ type server struct {
 	// peerAccessMan implements peer access controls.
 	peerAccessMan *accessMan
 
+	// actors is the central registry for the set of active actors.
+	actors *actor.ActorSystem
+
 	quit chan struct{}
 
 	wg sync.WaitGroup
@@ -757,6 +760,7 @@ func newServer(ctx context.Context, cfg *Config, listenAddrs []net.Addr,
 		actorSystem: actor.NewActorSystem(),
 
 		tlsManager: tlsManager,
+		actors:     actor.NewActorSystem(),
 
 		featureMgr: featureMgr,
 		quit:       make(chan struct{}),
@@ -4502,6 +4506,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 			return !s.cfg.ProtocolOptions.NoExpAccountability()
 		},
 		NoDisconnectOnPongFailure: s.cfg.NoDisconnectOnPongFailure,
+		Actors:                    s.actors,
 	}
 
 	copy(pCfg.PubKeyBytes[:], peerAddr.IdentityKey.SerializeCompressed())
@@ -5558,37 +5563,25 @@ func (s *server) ChanHasRbfCoopCloser(peerPub *btcec.PublicKey,
 // attemptCoopRbfFeeBump attempts to look up the active chan closer for a
 // channel given the outpoint. If found, we'll attempt to do a fee bump,
 // returning channels used for updates. If the channel isn't currently active
-// (p2p connection established), then his function will return an error.
+// (p2p connection established), then this function will return an error.
 func (s *server) attemptCoopRbfFeeBump(ctx context.Context,
 	chanPoint wire.OutPoint, feeRate chainfee.SatPerKWeight,
 	deliveryScript lnwire.DeliveryAddress) (*peer.CoopCloseUpdates, error) {
 
-	// First, we'll attempt to look up the channel based on it's
-	// ChannelPoint.
-	channel, err := s.chanStateDB.FetchChannel(chanPoint)
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch channel: %w", err)
-	}
-
-	// From the channel, we can now get the pubkey of the peer, then use
-	// that to eventually get the chan closer.
-	peerPub := channel.IdentityPub.SerializeCompressed()
-
-	// Now that we have the peer pub, we can look up the peer itself.
-	s.mu.RLock()
-	targetPeer, ok := s.peersByPub[string(peerPub)]
-	s.mu.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("peer for ChannelPoint(%v) is "+
-			"not online", chanPoint)
-	}
-
-	closeUpdates, err := targetPeer.TriggerCoopCloseRbfBump(
-		ctx, chanPoint, feeRate, deliveryScript,
+	// To perform this RBF bump, we'll send a bump message to the RBF close
+	// actor via the actor router.
+	rbfBumpMsg := peer.NewRbfBumpCloseMsg(
+		chanPoint, feeRate, deliveryScript,
 	)
+	rbfActorKey := peer.NewRbfCloserServiceKey(chanPoint)
+	rbfRouter := peer.RbfChanCloserRouter(s.actors, rbfActorKey)
+
+	closeUpdates, err := rbfRouter.Ask(
+		ctx, rbfBumpMsg,
+	).Await(ctx).Unpack()
 	if err != nil {
-		return nil, fmt.Errorf("unable to trigger coop rbf fee bump: "+
-			"%w", err)
+		return nil, fmt.Errorf("unable to trigger coop rbf fee "+
+			"bump: %w", err)
 	}
 
 	return closeUpdates, nil
