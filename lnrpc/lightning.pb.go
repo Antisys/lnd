@@ -231,12 +231,17 @@ const (
 	// channel before its maturity date.
 	CommitmentType_SCRIPT_ENFORCED_LEASE CommitmentType = 4
 	// A channel that uses musig2 for the funding output, and the new tapscript
-	// features where relevant.
+	// features where relevant. This is the staging version using development
+	// scripts.
 	CommitmentType_SIMPLE_TAPROOT CommitmentType = 5
+	// A channel that uses musig2 for the funding output, and the new tapscript
+	// features where relevant. This is the production version using final scripts
+	// and feature bits 80/81.
+	CommitmentType_SIMPLE_TAPROOT_FINAL CommitmentType = 6
 	// Identical to the SIMPLE_TAPROOT channel type, but with extra functionality.
 	// This channel type also commits to additional meta data in the tapscript
 	// leaves for the scripts in a channel.
-	CommitmentType_SIMPLE_TAPROOT_OVERLAY CommitmentType = 6
+	CommitmentType_SIMPLE_TAPROOT_OVERLAY CommitmentType = 7
 )
 
 // Enum value maps for CommitmentType.
@@ -248,7 +253,8 @@ var (
 		3: "ANCHORS",
 		4: "SCRIPT_ENFORCED_LEASE",
 		5: "SIMPLE_TAPROOT",
-		6: "SIMPLE_TAPROOT_OVERLAY",
+		6: "SIMPLE_TAPROOT_FINAL",
+		7: "SIMPLE_TAPROOT_OVERLAY",
 	}
 	CommitmentType_value = map[string]int32{
 		"UNKNOWN_COMMITMENT_TYPE": 0,
@@ -257,7 +263,8 @@ var (
 		"ANCHORS":                 3,
 		"SCRIPT_ENFORCED_LEASE":   4,
 		"SIMPLE_TAPROOT":          5,
-		"SIMPLE_TAPROOT_OVERLAY":  6,
+		"SIMPLE_TAPROOT_FINAL":    6,
+		"SIMPLE_TAPROOT_OVERLAY":  7,
 	}
 )
 
@@ -20356,7 +20363,7 @@ const file_lightning_proto_rawDesc = "" +
 	"\x1aUNUSED_WITNESS_PUBKEY_HASH\x10\x02\x12\x1d\n" +
 	"\x19UNUSED_NESTED_PUBKEY_HASH\x10\x03\x12\x12\n" +
 	"\x0eTAPROOT_PUBKEY\x10\x04\x12\x19\n" +
-	"\x15UNUSED_TAPROOT_PUBKEY\x10\x05*\xa8\x01\n" +
+	"\x15UNUSED_TAPROOT_PUBKEY\x10\x05*\xc2\x01\n" +
 	"\x0eCommitmentType\x12\x1b\n" +
 	"\x17UNKNOWN_COMMITMENT_TYPE\x10\x00\x12\n" +
 	"\n" +
@@ -20364,8 +20371,9 @@ const file_lightning_proto_rawDesc = "" +
 	"\x11STATIC_REMOTE_KEY\x10\x02\x12\v\n" +
 	"\aANCHORS\x10\x03\x12\x19\n" +
 	"\x15SCRIPT_ENFORCED_LEASE\x10\x04\x12\x12\n" +
-	"\x0eSIMPLE_TAPROOT\x10\x05\x12\x1a\n" +
-	"\x16SIMPLE_TAPROOT_OVERLAY\x10\x06*a\n" +
+	"\x0eSIMPLE_TAPROOT\x10\x05\x12\x18\n" +
+	"\x14SIMPLE_TAPROOT_FINAL\x10\x06\x12\x1a\n" +
+	"\x16SIMPLE_TAPROOT_OVERLAY\x10\a*a\n" +
 	"\tInitiator\x12\x15\n" +
 	"\x11INITIATOR_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fINITIATOR_LOCAL\x10\x01\x12\x14\n" +
