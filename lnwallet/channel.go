@@ -861,6 +861,11 @@ type channelOpts struct {
 	auxHtlcValidator fn.Option[AuxHtlcValidator]
 
 	skipNonceInit bool
+
+	// taprootNonceType specifies which nonce format to use when
+	// constructing messages for the peer. This is determined by the peer's
+	// advertised feature bits.
+	taprootNonceType lnwire.TaprootNonceType
 }
 
 // WithLocalMusigNonces is used to bind an existing verification/local nonce to
@@ -912,12 +917,13 @@ func WithAuxResolver(resolver AuxContractResolver) ChannelOpt {
 	}
 }
 
-// WithAuxHtlcValidator is used to specify a custom HTLC validator for the
-// channel. This validator will be called during HTLC addition to perform
-// final validation checks against the most up-to-date channel state.
-func WithAuxHtlcValidator(validator AuxHtlcValidator) ChannelOpt {
+// WithPeerFeatures determines the appropriate nonce type to use based on the
+// peer's advertised feature bits. If the peer supports the final taproot
+// channel feature bits (80/81), we use the map-based LocalNonces field.
+// Otherwise, we fall back to the legacy single LocalNonce field.
+func WithPeerFeatures(features *lnwire.FeatureVector) ChannelOpt {
 	return func(o *channelOpts) {
-		o.auxHtlcValidator = fn.Some(validator)
+		o.taprootNonceType = lnwire.DetermineTaprootNonceType(features)
 	}
 }
 
@@ -9530,20 +9536,26 @@ func (lc *LightningChannel) generateRevocation(height uint64) (*lnwire.RevokeAnd
 			return nil, err
 		}
 
-		// Populate the legacy LocalNonce field for backwards
-		// compatibility.
-		revocationMsg.LocalNonce = lnwire.SomeMusig2Nonce(
-			nextVerificationNonce.PubNonce,
-		)
-
-		// Also populate the new LocalNonces field. For revoke and ack,
-		// we'll key our nonce by the funding txid.
 		fundingTxid := lc.channelState.FundingOutpoint.Hash
-		noncesMap := make(map[chainhash.Hash]lnwire.Musig2Nonce)
-		noncesMap[fundingTxid] = nextVerificationNonce.PubNonce
-		revocationMsg.LocalNonces = lnwire.SomeLocalNonces(
-			lnwire.LocalNoncesData{NoncesMap: noncesMap},
-		)
+		nonce := nextVerificationNonce.PubNonce
+
+		// Set the appropriate nonce field based on the peer's feature
+		// bits. If they support the final taproot channel feature bits,
+		// we use the map-based LocalNonces field. Otherwise, we use the
+		// legacy single LocalNonce field.
+		switch lc.opts.taprootNonceType {
+		case lnwire.TaprootNonceTypeLegacy:
+			revocationMsg.LocalNonce = lnwire.SomeMusig2Nonce(nonce)
+
+		case lnwire.TaprootNonceTypeMap:
+			noncesMap := make(map[chainhash.Hash]lnwire.Musig2Nonce)
+			noncesMap[fundingTxid] = nonce
+			revocationMsg.LocalNonces = lnwire.SomeLocalNonces(
+				lnwire.LocalNoncesData{
+					NoncesMap: noncesMap,
+				},
+			)
+		}
 	}
 
 	return revocationMsg, nil
