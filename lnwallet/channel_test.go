@@ -3597,6 +3597,8 @@ func TestChanSyncTaprootLocalNonces(t *testing.T) {
 	aliceChannel, bobChannel, err := CreateTestChannels(t, chanType)
 	require.NoError(t, err)
 
+	fundingTxid := aliceChannel.channelState.FundingOutpoint.Hash
+
 	t.Run("legacy nonce type only populates LocalNonce", func(t *testing.T) {
 		assertNoChanSyncNeeded(t, aliceChannel, bobChannel)
 
