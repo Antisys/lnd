@@ -1162,14 +1162,10 @@ func (p *Brontide) loadActiveChannels(chans []*channeldb.OpenChannel) (
 			},
 		)
 
-		p.cfg.AuxTrafficShaper.WhenSome(
-			func(ts htlcswitch.AuxTrafficShaper) {
-				val := p.createHtlcValidator(dbChan, ts)
-				chanOpts = append(
-					chanOpts,
-					lnwallet.WithAuxHtlcValidator(val),
-				)
-			},
+		// Pass remote peer's feature bits so the channel uses the
+		// correct nonce format (type 4 for staging, type 22 for final).
+		chanOpts = append(
+			chanOpts, lnwallet.WithPeerFeatures(p.remoteFeatures),
 		)
 
 		lnChan, err := lnwallet.NewLightningChannel(
@@ -5323,14 +5319,9 @@ func (p *Brontide) addActiveChannel(c *lnpeer.NewChannel) error {
 		chanOpts = append(chanOpts, lnwallet.WithAuxResolver(s))
 	})
 
-	p.cfg.AuxTrafficShaper.WhenSome(
-		func(ts htlcswitch.AuxTrafficShaper) {
-			val := p.createHtlcValidator(c.OpenChannel, ts)
-			chanOpts = append(
-				chanOpts, lnwallet.WithAuxHtlcValidator(val),
-			)
-		},
-	)
+	// Pass remote peer's feature bits so the channel uses the correct
+	// nonce format (type 4 for staging, type 22 for final).
+	chanOpts = append(chanOpts, lnwallet.WithPeerFeatures(p.remoteFeatures))
 
 	// If not already active, we'll add this channel to the set of active
 	// channels, so we can look it up later easily according to its channel
