@@ -357,7 +357,8 @@ func explicitNegotiateCommitmentType(channelType lnwire.ChannelType, local,
 
 		return lnwallet.CommitmentTypeSimpleTaprootFinal, nil
 
-	// Simple taproot channels with scid and zero conf (staging feature bits).
+	// Simple taproot channels with scid and zero conf (staging feature
+	// bits).
 	case channelFeatures.OnlyContains(
 		lnwire.SimpleTaprootChannelsRequiredStaging,
 		lnwire.ZeroConfRequired,
@@ -462,7 +463,7 @@ func implicitNegotiateCommitmentType(local,
 
 	// If both peers are signalling support for simple taproot channels with
 	// final feature bits, prefer that over staging bits.
-	if hasFeatures(local, remote, lnwire.SimpleTaprootChannelsOptionalFinal) {
+	if hasFeatures(local, remote, lnwire.SimpleTaprootChannelsOptionalFinal) { //nolint:ll
 		chanType := lnwire.ChannelType(*lnwire.NewRawFeatureVector(
 			lnwire.SimpleTaprootChannelsRequiredFinal,
 		))
@@ -472,7 +473,7 @@ func implicitNegotiateCommitmentType(local,
 
 	// If both peers are signalling support for simple taproot channels with
 	// staging feature bits, use those.
-	if hasFeatures(local, remote, lnwire.SimpleTaprootChannelsOptionalStaging) {
+	if hasFeatures(local, remote, lnwire.SimpleTaprootChannelsOptionalStaging) { //nolint:ll
 		chanType := lnwire.ChannelType(*lnwire.NewRawFeatureVector(
 			lnwire.SimpleTaprootChannelsRequiredStaging,
 		))

@@ -256,29 +256,32 @@ const (
 	// revoked taproot commitment transaction.
 	TaprootCommitmentRevoke StandardWitnessType = 34
 
-	// TaprootLocalCommitSpendFinal is a witness type that allows us to spend
-	// our settled local commitment after a CSV delay when we force close
-	// a final taproot channel (using production scripts).
+	// TaprootLocalCommitSpendFinal is a witness type that allows us to
+	// spend our settled local commitment after a CSV delay when we force
+	// close a final taproot channel (using production scripts).
 	TaprootLocalCommitSpendFinal StandardWitnessType = 35
 
-	// TaprootRemoteCommitSpendFinal is a witness type that allows us to spend
-	// our settled remote commitment after a CSV delay when the remote party
-	// has force closed a final taproot channel (using production scripts).
+	// TaprootRemoteCommitSpendFinal is a witness type that allows us to
+	// spend our settled remote commitment after a CSV delay when the remote
+	// party has force closed a final taproot channel (using production
+	// scripts).
 	TaprootRemoteCommitSpendFinal StandardWitnessType = 36
 
-	// TaprootHtlcOfferedTimeoutSecondLevelFinal is a witness that allows us to
-	// timeout an HTLC we offered to the remote party on our commitment
+	// TaprootHtlcOfferedTimeoutSecondLevelFinal is a witness that allows us
+	// to timeout an HTLC we offered to the remote party on our commitment
 	// transaction for final taproot channels (using production scripts).
 	TaprootHtlcOfferedTimeoutSecondLevelFinal StandardWitnessType = 37
 
-	// TaprootHtlcAcceptedSuccessSecondLevelFinal is a witness that allows us to
-	// sweep an HTLC we accepted on our commitment transaction after we go
-	// to the second level on chain for final taproot channels (using production scripts).
+	// TaprootHtlcAcceptedSuccessSecondLevelFinal is a witness that allows
+	// us to sweep an HTLC we accepted on our commitment transaction after
+	// we go to the second level on chain for final taproot channels (using
+	// production scripts).
 	TaprootHtlcAcceptedSuccessSecondLevelFinal StandardWitnessType = 38
 
-	// TaprootHtlcOfferedRemoteTimeoutFinal is a witness that allows us to sweep
-	// an HTLC we offered to the remote party that lies on the commitment
-	// transaction for the remote party for final taproot channels (using production scripts).
+	// TaprootHtlcOfferedRemoteTimeoutFinal is a witness that allows us to
+	// sweep an HTLC we offered to the remote party that lies on the
+	// commitment transaction for the remote party for final taproot
+	// channels (using production scripts).
 	TaprootHtlcOfferedRemoteTimeoutFinal StandardWitnessType = 39
 
 	// TaprootHtlcAcceptedRemoteSuccessFinal is a witness that allows us to
@@ -287,8 +290,8 @@ const (
 	TaprootHtlcAcceptedRemoteSuccessFinal StandardWitnessType = 40
 
 	// TaprootCommitmentRevokeFinal is a witness that allows us to sweep the
-	// settled output of a malicious counterparty's who broadcasts a
-	// revoked final taproot commitment transaction (using production scripts).
+	// settled output of a malicious counterparty's who broadcasts a revoked
+	// final taproot commitment transaction (using production scripts).
 	TaprootCommitmentRevokeFinal StandardWitnessType = 41
 )
 
@@ -738,9 +741,10 @@ func (wt StandardWitnessType) WitnessGenerator(signer Signer,
 					"must be set for taproot spend")
 			}
 
-			// TODO: For production taproot channels, we need to pass
-			// script options to generate the correct scripts. This requires
-			// channel type context that's not available here.
+			// TODO: For production taproot channels, we
+			// need to pass script options to generate the
+			// correct scripts. This requires channel type
+			// context that's not available here.
 			witness, err := ReceiverHTLCScriptTaprootTimeout(
 				signer, desc, tx, -1, nil, nil,
 			)
@@ -774,9 +778,11 @@ func (wt StandardWitnessType) WitnessGenerator(signer Signer,
 				Witness: witness,
 			}, nil
 
-		// Production taproot witness types - these use the same witness generation
-		// functions as their staging counterparts since the script options are
-		// applied when creating the script trees stored in the SignDescriptor.
+		// Production taproot witness types - these use the
+		// same witness generation functions as their staging
+		// counterparts since the script options are applied
+		// when creating the script trees stored in the
+		// SignDescriptor.
 		case TaprootLocalCommitSpendFinal:
 			// Same witness generation as TaprootLocalCommitSpend
 			desc.SignMethod = TaprootScriptSpendSignMethod
@@ -839,7 +845,6 @@ func (wt StandardWitnessType) WitnessGenerator(signer Signer,
 			}, nil
 
 		case TaprootHtlcOfferedRemoteTimeoutFinal:
-			// Same witness generation as TaprootHtlcOfferedRemoteTimeout
 			desc.SignMethod = TaprootScriptSpendSignMethod
 
 			if desc.ControlBlock == nil {
@@ -859,7 +864,6 @@ func (wt StandardWitnessType) WitnessGenerator(signer Signer,
 			}, nil
 
 		case TaprootHtlcAcceptedRemoteSuccessFinal:
-			// Same witness generation as TaprootHtlcAcceptedRemoteSuccess
 			desc.SignMethod = TaprootScriptSpendSignMethod
 
 			if desc.ControlBlock == nil {
@@ -1053,7 +1057,8 @@ func (wt StandardWitnessType) SizeUpperBound() (lntypes.WeightUnit,
 	case TaprootCommitmentRevoke:
 		return TaprootToLocalRevokeWitnessSize, false, nil
 
-	// Production taproot witness types have the same sizes as their staging counterparts
+	// Production taproot witness types have the same sizes as their
+	// staging counterparts
 	case TaprootLocalCommitSpendFinal:
 		return TaprootToLocalWitnessSize, false, nil
 

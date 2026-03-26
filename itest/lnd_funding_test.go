@@ -194,6 +194,7 @@ func runBasicFundingTest(ht *lntest.HarnessTest, carolCommitType,
 	// TODO(roasbeef): lift after gossip 1.75
 	if carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT ||
 		carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT_FINAL {
+
 		privateChan = true
 	}
 
@@ -219,9 +220,9 @@ func runBasicFundingTest(ht *lntest.HarnessTest, carolCommitType,
 	}
 
 	// NOTE: With both staging and final feature bits advertised by default,
-	// cross-type negotiation (e.g., Carol wants FINAL, Dave prefers STAGING)
-	// will succeed because explicit channel_type takes precedence. The
-	// channel will be created with Carol's requested type (FINAL) since
+	// cross-type negotiation (e.g., Carol wants FINAL, Dave prefers
+	// STAGING) will succeed because explicit channel_type takes precedence.
+	// The channel will be created with Carol's requested type (FINAL) since
 	// Dave advertises support for it. This is acceptable because explicit
 	// channel types allow the initiator to choose which variant to use.
 	//
@@ -230,10 +231,12 @@ func runBasicFundingTest(ht *lntest.HarnessTest, carolCommitType,
 	//
 	// Skip the incompatibility check for same-family types (both taproot)
 	// when explicit channel types are used.
-	crossTaprootNegotiation := (carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT_FINAL &&
-		daveCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT) ||
-		(carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT &&
-			daveCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT_FINAL)
+	carolFinal := carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT_FINAL //nolint:ll
+	carolStaging := carolCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT
+	daveFinal := daveCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT_FINAL
+	daveStaging := daveCommitType == lnrpc.CommitmentType_SIMPLE_TAPROOT
+	crossTaprootNegotiation := (carolFinal && daveStaging) ||
+		(carolStaging && daveFinal)
 
 	// For cross-taproot negotiation, the channel will use Carol's explicit
 	// type, so update our expectation accordingly.

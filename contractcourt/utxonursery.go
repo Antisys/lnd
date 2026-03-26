@@ -448,12 +448,15 @@ func (u *UtxoNursery) IncubateOutputs(chanPoint wire.OutPoint,
 		)
 
 		var witType input.StandardWitnessType
-		isProdTaproot := isTaproot && u.isProdTaprootResolution(htlcRes.ResolutionBlob)
-		if isProdTaproot {
-			witType = input.TaprootHtlcAcceptedSuccessSecondLevelFinal
-		} else if isTaproot {
+		isProdTaproot := isTaproot && u.isProdTaprootResolution(
+			htlcRes.ResolutionBlob,
+		)
+		switch {
+		case isProdTaproot:
+			witType = input.TaprootHtlcAcceptedSuccessSecondLevelFinal //nolint:ll
+		case isTaproot:
 			witType = input.TaprootHtlcAcceptedSuccessSecondLevel
-		} else {
+		default:
 			witType = input.HtlcAcceptedSuccessSecondLevel
 		}
 
@@ -495,15 +498,17 @@ func (u *UtxoNursery) IncubateOutputs(chanPoint wire.OutPoint,
 		)
 
 		var witType input.StandardWitnessType
-		isProdTaproot := isTaproot && u.isProdTaprootResolution(htlcRes.ResolutionBlob)
-		if isProdTaproot {
+		isProdTaproot := isTaproot && u.isProdTaprootResolution(
+			htlcRes.ResolutionBlob,
+		)
+		switch {
+		case isProdTaproot:
 			witType = input.TaprootHtlcOfferedRemoteTimeoutFinal
-		} else if isTaproot {
+		case isTaproot:
 			witType = input.TaprootHtlcOfferedRemoteTimeout
-		} else {
+		default:
 			witType = input.HtlcOfferedRemoteTimeout
 		}
-
 		// Otherwise, this is actually a kid output as we can sweep it
 		// once the commitment transaction confirms, and the absolute
 		// CLTV lock has expired. We set the CSV delay what the
@@ -574,13 +579,16 @@ func (u *UtxoNursery) IncubateOutputs(chanPoint wire.OutPoint,
 	return nil
 }
 
-// isProdTaprootResolution determines if a resolution blob indicates production taproot.
-// For now, we use a simple heuristic: if there's a resolution blob, it's likely production.
-// This can be refined later to parse the actual blob structure.
-func (u *UtxoNursery) isProdTaprootResolution(resolutionBlob fn.Option[tlv.Blob]) bool {
+// isProdTaprootResolution determines if a resolution blob indicates production
+// taproot. For now, we use a simple heuristic: if there's a resolution blob,
+// it's likely production. This can be refined later to parse the actual blob
+// structure.
+func (u *UtxoNursery) isProdTaprootResolution(resolutionBlob fn.Option[tlv.Blob], //nolint:ll
+) bool {
+
 	// For production taproot channels, there should be a resolution blob
-	// containing auxiliary channel information. If no blob is present,
-	// this is likely a staging taproot channel.
+	// containing auxiliary channel information. If no blob is present, this
+	// is likely a staging taproot channel.
 	return resolutionBlob.IsSome()
 }
 
@@ -648,7 +656,7 @@ func (u *UtxoNursery) NurseryReport(
 					report.AddLimboStage1SuccessHtlc(&kid)
 
 				case input.HtlcOfferedRemoteTimeout,
-					input.TaprootHtlcOfferedRemoteTimeoutFinal,
+					input.TaprootHtlcOfferedRemoteTimeoutFinal, //nolint:ll
 					input.TaprootHtlcOfferedRemoteTimeout:
 					// This is an HTLC output on the
 					// commitment transaction of the remote
@@ -665,7 +673,7 @@ func (u *UtxoNursery) NurseryReport(
 				switch kid.WitnessType() {
 
 				case input.HtlcOfferedRemoteTimeout,
-					input.TaprootHtlcOfferedRemoteTimeoutFinal,
+					input.TaprootHtlcOfferedRemoteTimeoutFinal, //nolint:ll
 					input.TaprootHtlcOfferedRemoteTimeout:
 					// This is an HTLC output on the
 					// commitment transaction of the remote
@@ -693,9 +701,10 @@ func (u *UtxoNursery) NurseryReport(
 				// been swept back into the wallet. Each output
 				// will contribute towards the recovered
 				// balance.
+				//
+				//nolint:ll
 				switch kid.WitnessType() {
 
-				//nolint:ll
 				case input.TaprootHtlcAcceptedSuccessSecondLevelFinal:
 					fallthrough
 				case input.TaprootHtlcAcceptedSuccessSecondLevel:
@@ -1417,15 +1426,17 @@ func (u *UtxoNursery) makeBabyOutput(chanPoint *wire.OutPoint,
 	)
 
 	var witnessType input.StandardWitnessType
-	isProdTaproot := isTaproot && u.isProdTaprootResolution(htlcResolution.ResolutionBlob)
-	if isProdTaproot {
+	isProdTaproot := isTaproot && u.isProdTaprootResolution(
+		htlcResolution.ResolutionBlob,
+	)
+	switch {
+	case isProdTaproot:
 		witnessType = input.TaprootHtlcOfferedTimeoutSecondLevelFinal
-	} else if isTaproot {
+	case isTaproot:
 		witnessType = input.TaprootHtlcOfferedTimeoutSecondLevel
-	} else {
+	default:
 		witnessType = input.HtlcOfferedTimeoutSecondLevel
 	}
-
 	kid := makeKidOutput(
 		&htlcOutpoint, chanPoint, blocksToMaturity, witnessType,
 		&htlcResolution.SweepSignDesc, 0, deadlineHeight,

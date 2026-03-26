@@ -2292,46 +2292,68 @@ func TestTaprootHtlcScriptGeneration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that both script trees are generated successfully.
-	require.NotNil(t, stagingSenderScript, "staging sender script should be generated")
-	require.NotNil(t, prodSenderScript, "production sender script should be generated")
+	require.NotNil(t,
+		stagingSenderScript, "staging sender script should "+
+			"be generated",
+	)
+	require.NotNil(t,
+		prodSenderScript, "production sender script should "+
+			"be generated",
+	)
 
 	// Test ReceiverHTLCScriptTaproot with staging vs production scripts.
 	stagingReceiverScript, err := ReceiverHTLCScriptTaproot(
-		cltvExpiry, senderPubKey, receiverPubKey, revokePubKey, hashBytes,
+		cltvExpiry, senderPubKey, receiverPubKey, revokePubKey,
+		hashBytes,
 		whoseCommit, auxLeaf,
 	)
 	require.NoError(t, err)
 
 	prodReceiverScript, err := ReceiverHTLCScriptTaproot(
-		cltvExpiry, senderPubKey, receiverPubKey, revokePubKey, hashBytes,
+		cltvExpiry, senderPubKey, receiverPubKey, revokePubKey,
+		hashBytes,
 		whoseCommit, auxLeaf, WithProdScripts(),
 	)
 	require.NoError(t, err)
 
 	// Verify that both script trees are generated successfully.
-	require.NotNil(t, stagingReceiverScript, "staging receiver script should be generated")
-	require.NotNil(t, prodReceiverScript, "production receiver script should be generated")
+	require.NotNil(t, stagingReceiverScript,
+		"staging receiver script should be generated")
+	require.NotNil(t, prodReceiverScript,
+		"production receiver script should be generated")
 
 	// Scripts should be different between staging and production.
-	// Note: The sender success script (redeemed by receiver) should differ.
-	require.NotEqual(t, stagingSenderScript.SuccessTapLeaf.Script,
+	// Note: The sender success script (redeemed by receiver)
+	// should differ.
+	require.NotEqual(t,
+		stagingSenderScript.SuccessTapLeaf.Script,
 		prodSenderScript.SuccessTapLeaf.Script,
-		"staging and production sender success scripts should differ")
+		"staging and production sender success scripts should differ",
+	)
 	require.NotEqual(t, stagingReceiverScript.TimeoutTapLeaf.Script,
 		prodReceiverScript.TimeoutTapLeaf.Script,
 		"staging and production receiver timeout scripts should differ")
 
-	// Production scripts should be smaller due to OP_CHECKSIGVERIFY optimizations.
+	// Production scripts should be smaller due to
+	// OP_CHECKSIGVERIFY optimizations.
 	require.Less(t, len(prodSenderScript.SuccessTapLeaf.Script),
 		len(stagingSenderScript.SuccessTapLeaf.Script),
-		"production sender success script should be smaller than staging")
+		"production sender success script should be smaller "+
+			"than staging",
+	)
 	require.Less(t, len(prodReceiverScript.TimeoutTapLeaf.Script),
 		len(stagingReceiverScript.TimeoutTapLeaf.Script),
-		"production receiver timeout script should be smaller than staging")
+		"production receiver timeout script should be smaller "+
+			"than staging",
+	)
 
 	// Verify the script trees have the expected structure.
-	require.NotNil(t, stagingSenderScript.TimeoutTapLeaf, "staging sender should have timeout leaf")
-	require.NotNil(t, prodSenderScript.TimeoutTapLeaf, "production sender should have timeout leaf")
-	require.NotNil(t, stagingReceiverScript.SuccessTapLeaf, "staging receiver should have success leaf")
-	require.NotNil(t, prodReceiverScript.SuccessTapLeaf, "production receiver should have success leaf")
+	require.NotNil(t, stagingSenderScript.TimeoutTapLeaf,
+		"staging sender should have timeout leaf")
+	require.NotNil(t, prodSenderScript.TimeoutTapLeaf,
+		"production sender should have timeout leaf")
+	require.NotNil(t, stagingReceiverScript.SuccessTapLeaf,
+		"staging receiver should have success leaf")
+	require.NotNil(t, prodReceiverScript.SuccessTapLeaf,
+		"production receiver should have success leaf")
 }
